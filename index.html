@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Marine Protected Area Analyser — Interactive ocean conservation dashboard. Explore MPA coverage, critical habitats, and gap analysis for SDG 14 Life Below Water." />
+  <meta name="theme-color" content="#020B18" />
+  <title>MPA Analyser | Marine Protected Area Dashboard</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════ NAVIGATION ═══════════════════ -->
+  <nav id="navbar">
+    <div class="nav-brand">
+      <span class="nav-title">MPA Analyser</span>
+    </div>
+    <div class="nav-links">
+      <a href="#overview" class="nav-link" id="nav-overview">Overview</a>
+      <a href="#map-section" class="nav-link" id="nav-map">Ocean Map</a>
+      <a href="#critical-section" class="nav-link" id="nav-critical">Critical Habitat</a>
+      <a href="#gap-section" class="nav-link" id="nav-gap">Gap Analysis</a>
+    </div>
+    <div class="nav-right">
+      <span class="sdg-badge">SDG 14</span>
+      <button class="nav-reset-btn" id="nav-reset-btn" onclick="resetState()" title="Reset all MPA changes">↺ Reset</button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════ HERO ═══════════════════ -->
+  <section id="hero">
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        <span>SDG 14 — Life Below Water</span>
+      </div>
+
+      <h1 class="hero-title">
+        Marine Protected<br />
+        <span class="gradient-text">Area Analyser</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        Explore ocean biodiversity, identify critical habitats,<br />
+        and expand marine protection coverage in real-time.
+      </p>
+
+      <div class="hero-stats-bar" id="hero-stats-bar">
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="hero-coverage">0%</div>
+          <div class="hero-stat-label">MPA Coverage</div>
+        </div>
+        <div class="hero-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="hero-total">0</div>
+          <div class="hero-stat-label">Ocean Zones</div>
+        </div>
+        <div class="hero-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="hero-critical">0</div>
+          <div class="hero-stat-label">Critical Zones</div>
+        </div>
+        <div class="hero-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="hero-protected">0</div>
+          <div class="hero-stat-label">Protected</div>
+        </div>
+      </div>
+
+      <button class="hero-cta" id="hero-cta-btn" onclick="document.getElementById('overview').scrollIntoView({behavior:'smooth'})">
+        <span>Explore the Ocean</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </button>
+    </div>
+
+    <div class="scroll-indicator">
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ OVERVIEW STATS ═══════════════════ -->
+  <section id="overview">
+    <div class="section-header reveal-up">
+      <div class="section-tag">OVERVIEW</div>
+      <h2 class="section-title">Ocean at a Glance</h2>
+      <p class="section-subtitle">Real-time metrics across all 30 monitored ocean grid zones</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card glass-card reveal-up" data-delay="0">
+        <div class="stat-card-icon" style="--icon-clr:#00D4FF">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div class="stat-card-value" id="stat-coverage">--%</div>
+        <div class="stat-card-label">Critical Habitat Coverage</div>
+        <div class="stat-bar"><div class="stat-bar-fill cyan" id="fill-coverage"></div></div>
+        <div class="stat-card-sub" id="sub-coverage">of critical habitat area (km²) protected</div>
+      </div>
+
+      <div class="stat-card glass-card reveal-up" data-delay="100">
+        <div class="stat-card-icon" style="--icon-clr:#00FFD1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="stat-card-value" id="stat-protected">--</div>
+        <div class="stat-card-label">Zones Under Protection</div>
+        <div class="stat-bar"><div class="stat-bar-fill teal" id="fill-protected"></div></div>
+        <div class="stat-card-sub">out of 30 total zones</div>
+      </div>
+
+      <div class="stat-card glass-card reveal-up" data-delay="200">
+        <div class="stat-card-icon" style="--icon-clr:#FF6B6B">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="stat-card-value" id="stat-critical">--</div>
+        <div class="stat-card-label">Critical Habitat Zones</div>
+        <div class="stat-bar"><div class="stat-bar-fill coral" id="fill-critical"></div></div>
+        <div class="stat-card-sub">high richness + high pressure</div>
+      </div>
+
+      <div class="stat-card glass-card reveal-up" data-delay="300">
+        <div class="stat-card-icon" style="--icon-clr:#FFB347">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="stat-card-value" id="stat-unprotected">--</div>
+        <div class="stat-card-label">Unprotected Critical Zones</div>
+        <div class="stat-bar"><div class="stat-bar-fill amber" id="fill-unprotected"></div></div>
+        <div class="stat-card-sub">requiring urgent action</div>
+      </div>
+
+      <div class="stat-card glass-card reveal-up" data-delay="400">
+        <div class="stat-card-icon" style="--icon-clr:#00FFD1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+        </div>
+        <div class="stat-card-value" id="stat-area-km">--</div>
+        <div class="stat-card-label">Critical Habitat Protected (km²)</div>
+        <div class="stat-bar"><div class="stat-bar-fill teal" id="fill-area"></div></div>
+        <div class="stat-card-sub">critical habitat area under MPA</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ INTERACTIVE MAP ═══════════════════ -->
+  <section id="map-section">
+    <div class="section-header reveal-up">
+      <div class="section-tag">INTERACTIVE MAP</div>
+      <h2 class="section-title">Ocean Zone Explorer</h2>
+      <p class="section-subtitle">Click any unprotected zone to designate it as a Marine Protected Area</p>
+    </div>
+
+    <div class="map-container reveal-up">
+      <!-- Legend -->
+      <div class="map-legend">
+        <button class="filter-btn" id="filter-protected" data-filter="protected" onclick="setFilter('protected')"><div class="legend-dot protected-dot"></div><span>Protected MPA</span></button>
+        <button class="filter-btn" id="filter-critical"  data-filter="critical"  onclick="setFilter('critical')"><div class="legend-dot critical-dot"></div><span>Critical Unprotected</span></button>
+        <button class="filter-btn" id="filter-moderate"  data-filter="moderate"  onclick="setFilter('moderate')"><div class="legend-dot moderate-dot"></div><span>Moderate Risk</span></button>
+        <button class="filter-btn" id="filter-low"       data-filter="low"       onclick="setFilter('low')"><div class="legend-dot low-dot"></div><span>Low Priority</span></button>
+      </div>
+
+
+      <!-- Zone Grid (data-bar layout) -->
+      <div class="zone-grid-outer">
+        <div class="zone-row-labels">
+          <div class="zrl">ARCTIC</div>
+          <div class="zrl">TEMPERATE</div>
+          <div class="zrl">TROPICAL</div>
+          <div class="zrl">SUBTROPICAL</div>
+          <div class="zrl">SOUTHERN</div>
+        </div>
+        <div id="zone-grid"><!-- Rendered by JS --></div>
+      </div>
+
+      <!-- Zone Panel (list + detail) -->
+      <div class="zone-panel glass-card" id="zone-panel">
+        <div class="zone-panel-hdr">
+          <span class="zone-panel-count" id="zone-panel-count">30 ZONES</span>
+        </div>
+        <div class="zone-list-scroll" id="zone-list"><!-- Rendered by JS --></div>
+        <div class="zone-detail-block" id="zone-detail" style="display:none">
+          <div class="zd-name" id="zd-name"></div>
+          <div class="zd-meta" id="zd-meta"></div>
+          <div class="zd-metrics-row">
+            <div class="zd-mc">
+              <div class="zd-mc-lbl">Species richness</div>
+              <div class="zd-mc-val" id="zd-richness"></div>
+            </div>
+            <div class="zd-mc">
+              <div class="zd-mc-lbl">Fishing pressure</div>
+              <div class="zd-mc-val" id="zd-pressure"></div>
+            </div>
+          </div>
+          <div class="zd-extra-row">
+            <div class="zd-extra"><span class="zd-extra-lbl">Area</span><span class="zd-extra-val" id="zd-area"></span></div>
+            <div class="zd-extra"><span class="zd-extra-lbl">Depth</span><span class="zd-extra-val" id="zd-depth"></span></div>
+            <div class="zd-extra"><span class="zd-extra-lbl">Habitat</span><span class="zd-extra-val" id="zd-habitat"></span></div>
+          </div>
+          <button class="protect-btn btn-add" onclick="toggleProtection()">🛡️ Add MPA Protection</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ CRITICAL HABITAT ═══════════════════ -->
+  <section id="critical-section">
+    <div class="section-header reveal-up">
+      <div class="section-tag">CRITICAL HABITAT</div>
+      <h2 class="section-title">High-Priority Zones</h2>
+      <p class="section-subtitle">Zones where species richness ≥ 7 AND fishing pressure ≥ 7 — the most vulnerable ecosystems</p>
+    </div>
+    <div class="critical-grid" id="critical-grid">
+      <!-- Rendered by JS -->
+    </div>
+  </section>
+
+  <!-- ═══════════════════ GAP ANALYSIS ═══════════════════ -->
+  <section id="gap-section">
+    <div class="section-header reveal-up">
+      <div class="section-tag">GAP ANALYSIS</div>
+      <h2 class="section-title">Top 5 Conservation Gaps</h2>
+      <p class="section-subtitle">Unprotected critical zones ranked by conservation score — where intervention is needed most</p>
+    </div>
+
+    <div class="gap-wrapper">
+      <div class="gap-list" id="gap-list"><!-- Rendered by JS --></div>
+      <div class="gap-chart-panel glass-card reveal-up" id="gap-chart-panel">
+        <div class="chart-title">Conservation Priority Index</div>
+        <div class="chart-bars" id="chart-bars"><!-- Rendered by JS --></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ FOOTER ═══════════════════ -->
+  <footer id="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span style="font-size:22px">🌊</span>
+        <span>MPA Analyser</span>
+      </div>
+      <p class="footer-sub">Digital Green Summit · SDG 14 — Life Below Water</p>
+      <p class="footer-dept">Department of Computer Science · First Year Web Development Exhibition</p>
+    </div>
+  </footer>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span class="toast-icon">🛡️</span>
+    <span class="toast-msg" id="toast-msg">Zone protected!</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
